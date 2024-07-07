@@ -1,0 +1,81 @@
+##
+ # Author: Neal Gompa
+ #
+ # Licensed under the GNU General Public License Version 3
+ # Fedora-License-Identifier: GPLv3+
+ # SPDX-2.0-License-Identifier: GPL-3.0+
+ # SPDX-3.0-License-Identifier: GPL-3.0-or-later
+ #
+ # This is free software: you can redistribute it and/or modify
+ # it under the terms of the GNU General Public License as published by
+ # the Free Software Foundation, either version 3 of the License, or
+ # (at your option) any later version.
+ #
+ # This is distributed in the hope that it will be useful,
+ # but WITHOUT ANY WARRANTY; without even the implied warranty of
+ # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ # GNU General Public License for more details.
+ #
+ # You should have received a copy of the GNU General Public License
+ # along with this.  If not, see <https://www.gnu.org/licenses/>.
+##
+
+
+---
+- name: Run tasks for CentOS/RHEL
+  include_tasks: centos.yml
+  when: ansible_facts["distribution"] == "CentOS"
+
+- name: Run tasks for Fedora
+  include_tasks: fedora.yml
+  when: ansible_facts["distribution"] == "Fedora"
+
+- name: Tasks to set up for live streaming
+  become: true
+  tags:
+    - "streaming"
+  block:
+   - name: Switch to Mesa freeworld VA-API drivers
+     ansible.builtin.command: "dnf --assumeyes swap mesa-va-drivers mesa-va-drivers-freeworld"
+     when: "'mesa-va-drivers' in ansible_facts['packages']"
+     tags:
+       - "dnf"
+   - name: Install OBS Studio and useful dependencies
+     ansible.builtin.dnf:
+       pkg:
+         - "obs-studio"
+         - "obs-studio-plugin-x264"
+         - "obs-studio-plugin-webkitgtk"
+         - "qpwgraph"
+         - "/usr/bin/vainfo"
+       state: "present"
+     tags:
+       - "dnf"
+
+- name: Tasks to set up for gaming
+  become: true
+  tags:
+    - "gaming"
+  block:
+   - name: Install Steam
+     when: ansible_architecture == "x86_64"
+     ansible.builtin.dnf:
+       pkg:
+         - "steam"
+       state: "present"
+     tags:
+       - "dnf"
+
+- name: Tasks to set up for multimedia
+  become: true
+  tags:
+    - "multimedia"
+  block:
+   - name: Install FFmpeg
+     ansible.builtin.dnf:
+       pkg:
+         - "ffmpeg-free"
+         - "libavcodec-freeworld"
+       state: "present"
+     tags:
+       - "dnf"

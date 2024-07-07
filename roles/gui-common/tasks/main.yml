@@ -1,0 +1,85 @@
+##
+ # Author: Neal Gompa
+ #
+ # Licensed under the GNU General Public License Version 3
+ # Fedora-License-Identifier: GPLv3+
+ # SPDX-2.0-License-Identifier: GPL-3.0+
+ # SPDX-3.0-License-Identifier: GPL-3.0-or-later
+ #
+ # This is free software: you can redistribute it and/or modify
+ # it under the terms of the GNU General Public License as published by
+ # the Free Software Foundation, either version 3 of the License, or
+ # (at your option) any later version.
+ #
+ # This is distributed in the hope that it will be useful,
+ # but WITHOUT ANY WARRANTY; without even the implied warranty of
+ # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ # GNU General Public License for more details.
+ #
+ # You should have received a copy of the GNU General Public License
+ # along with this.  If not, see <https://www.gnu.org/licenses/>.
+##
+
+
+---
+- name: Run tasks for GNOME
+  include_tasks: gnome.yml
+  when: "'gnome-shell' in ansible_facts['packages']"
+
+- name: Run tasks for KDE Plasma 6
+  include_tasks: kde6.yml
+  when: "'plasma-workspace' in ansible_facts['packages'] and ansible_facts['packages']['plasma-workspace'][0].version is version('5.80', '>=')"
+
+- name: Run tasks for KDE Plasma 5
+  include_tasks: kde5.yml
+  when: "'plasma-workspace' in ansible_facts['packages'] and ansible_facts['packages']['plasma-workspace'][0].version is version('5.80', '<')"
+
+- name: Install Slack
+  become: true
+  when: ansible_architecture == "x86_64"
+  block:
+   - name: Enable the Slack repository
+     ansible.builtin.yum_repository:
+       name: "slack"
+       description: "Slack"
+       baseurl: "https://packagecloud.io/slacktechnologies/slack/fedora/21/$basearch"
+       # from: https://slack.com/help/articles/115004809166-Verify-Slack-for-Linux--beta--package-signatures
+       gpgkey: "https://slack.com/gpg/slack_pubkey_20230710.gpg"
+       gpgcheck: true
+     tags:
+       - "slack"
+       - "dnf"
+   - name: Disable Slack automatic repo configuration cron job
+     ansible.builtin.copy:
+       src: "etc/default/slack"
+       dest: "/etc/default/slack"
+     tags:
+       - "slack"
+   - name: Install Slack
+     ansible.builtin.dnf:
+       pkg:
+         - "slack"
+       state: "latest"
+     tags:
+       - "slack"
+       - "dnf"
+
+- name: Install Flatpak-based applications
+  become: true
+  when: ansible_architecture == "x86_64"
+  block:
+   - name: Install Flatpaks from Flathub
+     community.general.flatpak:
+       name:
+         - "com.belmoussaoui.ashpd.demo"
+         - "im.riot.Riot"
+         - "org.jitsi.jitsi-meet"
+         - "org.signal.Signal"
+         - "xyz.tytanium.DoorKnocker"
+       state: "present"
+       remote: "flathub"
+       method: "system"
+     async: 360
+     poll: 0
+     tags:
+       - "flatpak"

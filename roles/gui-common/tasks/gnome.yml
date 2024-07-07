@@ -1,0 +1,57 @@
+##
+ # Author: Neal Gompa
+ #
+ # Licensed under the GNU General Public License Version 3
+ # Fedora-License-Identifier: GPLv3+
+ # SPDX-2.0-License-Identifier: GPL-3.0+
+ # SPDX-3.0-License-Identifier: GPL-3.0-or-later
+ #
+ # This is free software: you can redistribute it and/or modify
+ # it under the terms of the GNU General Public License as published by
+ # the Free Software Foundation, either version 3 of the License, or
+ # (at your option) any later version.
+ #
+ # This is distributed in the hope that it will be useful,
+ # but WITHOUT ANY WARRANTY; without even the implied warranty of
+ # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ # GNU General Public License for more details.
+ #
+ # You should have received a copy of the GNU General Public License
+ # along with this.  If not, see <https://www.gnu.org/licenses/>.
+##
+
+
+---
+- name: Configure the GNOME desktop
+  block:
+   - name: Install AppIndicator/SNI extension
+     become: true
+     ansible.builtin.dnf:
+       pkg:
+         - "gnome-shell-extension-appindicator"
+       state: "present"
+     tags:
+       - "appindicator"
+       - "dnf"
+   - name: Enable AppIndicator/SNI extension
+     ansible.builtin.command: "gnome-extensions enable appindicatorsupport@rgcjonas.gmail.com"
+     tags:
+       - "appindicator"
+   - name: Set the window action buttons
+     ansible.builtin.command: "gsettings set org.gnome.desktop.wm.preferences button-layout ':minimize,maximize,close'"
+     tags:
+       - "gnome-wm"
+
+- name: Install extra applications for GNOME
+  become: true
+  block:
+   - name: Install GNOME app packages
+     ansible.builtin.dnf:
+       pkg:
+         - "flatseal"
+         - "fractal"
+         - "gnome-extensions-app"
+         - "lollypop"
+       state: "present"
+     tags:
+       - "dnf"

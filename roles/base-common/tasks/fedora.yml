@@ -1,0 +1,65 @@
+##
+ # Author: Neal Gompa
+ #
+ # Licensed under the GNU General Public License Version 3
+ # Fedora-License-Identifier: GPLv3+
+ # SPDX-2.0-License-Identifier: GPL-3.0+
+ # SPDX-3.0-License-Identifier: GPL-3.0-or-later
+ #
+ # This is free software: you can redistribute it and/or modify
+ # it under the terms of the GNU General Public License as published by
+ # the Free Software Foundation, either version 3 of the License, or
+ # (at your option) any later version.
+ #
+ # This is distributed in the hope that it will be useful,
+ # but WITHOUT ANY WARRANTY; without even the implied warranty of
+ # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ # GNU General Public License for more details.
+ #
+ # You should have received a copy of the GNU General Public License
+ # along with this.  If not, see <https://www.gnu.org/licenses/>.
+##
+
+
+---
+- name: Install Tailscale
+  become: true
+  block:
+   - name: Enable the Tailscale repository (Fedora)
+     ansible.builtin.yum_repository:
+       name: "tailscale-stable"
+       description: "Tailscale stable"
+       baseurl: "https://pkgs.tailscale.com/stable/fedora/$basearch"
+       gpgkey: "https://pkgs.tailscale.com/stable/fedora/repo.gpg"
+       gpgcheck: false
+       repo_gpgcheck: true
+     when: ansible_facts["distribution"] == "Fedora"
+     tags:
+       - "tailscale"
+       - "dnf"
+
+- name: Install common base software
+  become: true
+  block:
+   - name: Install provided third-party sources (Fedora)
+     ansible.builtin.dnf:
+       pkg:
+         - "fedora-third-party"
+         - "fedora-workstation-repositories"
+         - "fedora-flathub-remote"
+       state: "present"
+     when: ansible_facts["distribution"] == "Fedora"
+     tags:
+       - "dnf"
+   - name: Check if Fedora third party repositories are enabled
+     ansible.builtin.shell: "fedora-third-party query --quiet"
+     register: fedora_third_party_query
+     changed_when: fedora_third_party_query.rc != 0
+     failed_when: fedora_third_party_query.rc not in [ 0, 1, 2 ]
+     tags:
+       - "dnf"
+   - name: Enable Fedora third party repositories
+     ansible.builtin.command: fedora-third-party enable
+     when: fedora_third_party_query.rc != 0
+     tags:
+       - "dnf"

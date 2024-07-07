@@ -1,0 +1,64 @@
+##
+ # Author: Neal Gompa
+ #
+ # Licensed under the GNU General Public License Version 3
+ # Fedora-License-Identifier: GPLv3+
+ # SPDX-2.0-License-Identifier: GPL-3.0+
+ # SPDX-3.0-License-Identifier: GPL-3.0-or-later
+ #
+ # This is free software: you can redistribute it and/or modify
+ # it under the terms of the GNU General Public License as published by
+ # the Free Software Foundation, either version 3 of the License, or
+ # (at your option) any later version.
+ #
+ # This is distributed in the hope that it will be useful,
+ # but WITHOUT ANY WARRANTY; without even the implied warranty of
+ # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ # GNU General Public License for more details.
+ #
+ # You should have received a copy of the GNU General Public License
+ # along with this.  If not, see <https://www.gnu.org/licenses/>.
+##
+
+
+---
+- name: Enable EPEL (CentOS/RHEL)
+  become: true
+  when: ansible_facts["distribution"] == "CentOS" and ansible_facts["distribution_release"] == "Stream"
+  block:
+   - name: Install epel-release for CentOS/RHEL
+     ansible.builtin.dnf:
+       pkg:
+         - "dnf-utils"
+         - "epel-release"
+         - "epel-next-release"
+       state: "latest"
+     tags:
+       - "dnf"
+   - name: Check if CentOS CRB repo enabled for CentOS/RHEL
+     ansible.builtin.shell: "dnf -q repolist --enabled crb && echo disabled || echo enabled"
+     register: centos_crb
+     changed_when: false
+     tags:
+       - "dnf"
+   - name: Enable CentOS CRB repository for CentOS/RHEL
+     ansible.builtin.command: "dnf config-manager --set-enabled crb"
+     when: centos_crb.stdout == "disabled"
+     tags:
+       - "dnf"
+
+- name: Install Tailscale
+  become: true
+  block:
+   - name: Enable the Tailscale repository (CentOS/RHEL)
+     ansible.builtin.yum_repository:
+       name: "tailscale-stable"
+       description: "Tailscale stable"
+       baseurl: "https://pkgs.tailscale.com/stable/rhel/$releasever/$basearch"
+       gpgkey: "https://pkgs.tailscale.com/stable/rhel/$releasever/repo.gpg"
+       gpgcheck: false
+       repo_gpgcheck: true
+     when: ansible_facts["distribution"] == "CentOS"
+     tags:
+       - "tailscale"
+       - "dnf"

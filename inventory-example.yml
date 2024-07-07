@@ -1,0 +1,21 @@
+---
+# Servers
+servers:
+  hosts:
+    server1:
+      ansible_host: 192.168.1.101
+    server2:
+      ansible_host: 192.168.1.102
+    server3:
+      ansible_host: 192.168.1.103
+
+# Workstations
+workstations:
+  hosts:
+    desktops1:
+      ansible_host: 10.0.0.101
+    desktop2:
+      ansible_host: 10.0.0.102
+    desktop3:
+      ansible_host: 10.0.0.103
+

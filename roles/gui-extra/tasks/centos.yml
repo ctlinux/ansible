@@ -1,0 +1,44 @@
+##
+ # Author: Neal Gompa
+ #
+ # Licensed under the GNU General Public License Version 3
+ # Fedora-License-Identifier: GPLv3+
+ # SPDX-2.0-License-Identifier: GPL-3.0+
+ # SPDX-3.0-License-Identifier: GPL-3.0-or-later
+ #
+ # This is free software: you can redistribute it and/or modify
+ # it under the terms of the GNU General Public License as published by
+ # the Free Software Foundation, either version 3 of the License, or
+ # (at your option) any later version.
+ #
+ # This is distributed in the hope that it will be useful,
+ # but WITHOUT ANY WARRANTY; without even the implied warranty of
+ # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ # GNU General Public License for more details.
+ #
+ # You should have received a copy of the GNU General Public License
+ # along with this.  If not, see <https://www.gnu.org/licenses/>.
+##
+
+
+---
+- name: Tasks to set up RPM Fusion
+  become: true
+  block:
+   - name: Install RPM Fusion repository packages (CentOS/RHEL)
+     ansible.builtin.dnf:
+       pkg:
+         - "https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-{{ ansible_facts['distribution_major_version'] }}.noarch.rpm"
+         - "https://mirrors.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-{{ ansible_facts['distribution_major_version'] }}.noarch.rpm"
+       state: "present"
+       disable_gpg_check: true
+     tags:
+       - "dnf"
+   - name: Install RPM Fusion AppStream data packages (CentOS/RHEL)
+     ansible.builtin.dnf:
+       pkg:
+         - "rpmfusion-free-appstream-data"
+         - "rpmfusion-nonfree-appstream-data"
+       state: "present"
+     tags:
+       - "dnf"
