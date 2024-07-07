@@ -1,0 +1,8 @@
+# Don't copy ansible.cfg or hosts
+ansible.cfg
+hosts
+
+# Don't copy sensitive information
+inventories/
+vault/
+
